@@ -1,5 +1,7 @@
 # ESO Wizard
 
+![ESO Wizard cover](frontend/public/cover.png)
+
 ESO Wizard answers natural-language questions about The Elder Scrolls Online using **retrieval-augmented generation (RAG)**: answers are grounded in a knowledge base stored in Neon PostgreSQL (pgvector), not in the LLM's memory. **The knowledge base starts empty; no ESO content is included or invented.** No scraping exists; knowledge is added only through a controlled manual import.
 
 Stack: Vue 3 + TypeScript + Vite + Pinia + Tailwind · FastAPI + SQLAlchemy (async) + Alembic · Neon PostgreSQL + pgvector · Google Gemini (generation and embeddings).

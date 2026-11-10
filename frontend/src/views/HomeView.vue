@@ -32,15 +32,32 @@ function safeUrl(url: string): string | undefined {
 </script>
 
 <template>
-  <h1 class="text-3xl font-bold">Ask about Tamriel</h1>
-  <p class="mt-3 text-slate-300">
-    Ask an ESO question and explore answers grounded in the knowledge base.
-  </p>
   <form
-    class="mt-8 space-y-4"
+    class="mt-[90px] space-y-4"
     @submit.prevent="store.ask(question.trim(), category || null)"
   >
-    <label class="block" for="question">Your question</label>
+    <div class="relative flex items-center gap-2">
+      <label for="question">Your question</label>
+      <span class="group">
+        <button
+          type="button"
+          class="flex h-5 w-5 items-center justify-center rounded-full border border-slate-400 text-xs text-slate-300"
+          aria-label="About Tamriel"
+          aria-describedby="question-note"
+        >
+          i
+        </button>
+        <span
+          id="question-note"
+          role="tooltip"
+          class="invisible absolute left-0 top-7 z-10 w-72 max-w-full rounded-lg border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200 shadow-lg group-focus-within:visible group-hover:visible"
+        >
+          <strong class="block">Ask about Tamriel</strong>
+          Ask an ESO question and explore answers grounded in the knowledge
+          base.
+        </span>
+      </span>
+    </div>
     <textarea
       id="question"
       v-model="question"
