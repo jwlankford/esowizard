@@ -13,7 +13,11 @@ import UserMenu from "./components/UserMenu.vue";
     <div class="relative flex min-h-screen flex-col">
       <header class="flex items-start justify-between px-6 py-5">
         <RouterLink to="/" class="inline-block">
-          <img src="/medieval-shield.svg" alt="ESO Wizard home" class="h-12 w-12" />
+          <img
+            src="/medieval-shield.svg"
+            alt="ESO Wizard home"
+            class="h-12 w-12"
+          />
         </RouterLink>
         <UserMenu />
       </header>
