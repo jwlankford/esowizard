@@ -34,10 +34,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ".[dev]"
-      - run: ruff check app tests alembic
-      - run: ruff format --check app tests alembic
+      - run: ruff check app tests alembic ingestion
+      - run: ruff format --check app tests alembic ingestion
       - run: alembic upgrade head
-      - run: pytest -q
+      - run: pytest -q -m "not integration"
+      - run: pytest -q -m integration
 
   frontend:
     runs-on: ubuntu-latest

@@ -2,10 +2,11 @@
 import { nextTick, onMounted, ref, watch } from "vue";
 import { getCategories } from "../services/api";
 import { useAskStore } from "../stores/ask";
+import type { CategoryInfo } from "../types/api";
 
 const question = ref("");
 const category = ref("");
-const categories = ref<string[]>([]);
+const categories = ref<CategoryInfo[]>([]);
 const categoriesError = ref("");
 const store = useAskStore();
 const scroller = ref<HTMLElement | null>(null);
@@ -90,8 +91,8 @@ function safeUrl(url: string): string | undefined {
                 <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm">
                   <li v-for="(source, index) in message.sources" :key="index">
                     <a
-                      v-if="safeUrl(source.source_url)"
-                      :href="safeUrl(source.source_url)"
+                      v-if="source.url && safeUrl(source.url)"
+                      :href="safeUrl(source.url)"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="text-amber-300 underline"
@@ -141,8 +142,12 @@ function safeUrl(url: string): string | undefined {
               class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
             >
               <option value="">All categories</option>
-              <option v-for="item in categories" :key="item" :value="item">
-                {{ item }}
+              <option
+                v-for="item in categories"
+                :key="item.value"
+                :value="item.value"
+              >
+                {{ item.label }}
               </option>
             </select>
             <span

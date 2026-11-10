@@ -10,18 +10,19 @@ dependencies = [
   "fastapi==0.162.2",
   "uvicorn[standard]==0.54.0",
   "pydantic-settings==2.16.2",
-  "sqlalchemy==2.1.8",
+  "sqlalchemy[asyncio]==2.1.8",
   "alembic==1.20.1",
   "pgvector==0.5.1",
   "psycopg[binary]==3.3.8",
+  "asyncpg==0.32.0",
   "google-genai==3.0.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==9.2.0", "httpx==0.28.1", "ruff==0.17.4"]
+dev = ["pytest==9.2.0", "pytest-asyncio==1.4.1.post1", "httpx==0.28.1", "ruff==0.17.4"]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "ingestion*"]
 namespaces = true
 
 [tool.ruff]
@@ -29,3 +30,7 @@ line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+markers = ["integration: requires TEST_DATABASE_URL (a disposable, migrated Postgres with pgvector)"]

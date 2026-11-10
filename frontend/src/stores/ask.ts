@@ -1,13 +1,13 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { askQuestion } from "../services/api";
-import type { Source } from "../types/api";
+import type { SourceRef } from "../types/api";
 
 export interface ChatMessage {
   id: number;
   role: "user" | "assistant";
   content: string;
-  sources?: Source[];
+  sources?: SourceRef[];
   isError?: boolean;
 }
 
@@ -61,6 +61,7 @@ export const useAskStore = defineStore("ask", () => {
         role: "assistant",
         content: result.answer,
         sources: result.sources,
+        isError: result.status === "error",
       });
     } catch (reason) {
       conversation.messages.push({

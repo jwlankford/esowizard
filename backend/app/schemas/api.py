@@ -2,54 +2,52 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from app.core.categories import ESOCategory
+from app.schemas.knowledge import RetrievedChunk
 
-class Category(StrEnum):
-    ITEMS = "Items"
-    GEAR_SETS = "Gear Sets"
-    SKILLS = "Skills"
-    BUILDS = "Builds"
-    CHAMPION_POINTS = "Champion Points"
-    CRAFTING = "Crafting"
-    RECIPES = "Recipes"
-    PROVISIONING = "Provisioning"
-    FISHING = "Fishing"
-    DUNGEONS = "Dungeons"
-    TRIALS = "Trials"
-    BOSSES = "Bosses"
-    ZONES = "Zones"
-    LOCATIONS = "Locations"
-    QUESTS = "Quests"
-    ACHIEVEMENTS = "Achievements"
-    PVP = "PvP"
-    CYRODIIL = "Cyrodiil"
-    TRADING = "Trading"
-    ADDONS = "Addons"
-    GAME_HELP = "Game Help"
+
+class CategoryInfo(BaseModel):
+    value: ESOCategory
+    label: str
 
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
-    category: Category | None = None
+    category: ESOCategory | None = None
     limit: int = Field(default=10, ge=1, le=50)
+
+
+class SearchResponse(BaseModel):
+    query: str
+    results: list[RetrievedChunk]
 
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
-    category: Category | None = None
+    category: ESOCategory | None = None
 
 
-class Source(BaseModel):
+class AskStatus(StrEnum):
+    ANSWERED = "answered"
+    INSUFFICIENT_KNOWLEDGE = "insufficient_knowledge"
+    ERROR = "error"
+
+
+class SourceRef(BaseModel):
     title: str
+    url: str | None = None
     source_name: str
-    source_url: str
-    chunk_number: int
-    content: str
-
-
-class SearchResponse(BaseModel):
-    results: list[Source]
 
 
 class AskResponse(BaseModel):
+    question: str
     answer: str
-    sources: list[Source]
+    category: ESOCategory | None = None
+    status: AskStatus
+    sources: list[SourceRef] = Field(default_factory=list)
+    related_queries: list[str] = Field(default_factory=list)
+
+
+class HealthResponse(BaseModel):
+    status: str
+    detail: str | None = None

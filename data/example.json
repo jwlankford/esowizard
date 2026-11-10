@@ -1,0 +1,15 @@
+[
+  {
+    "title": "SYNTHETIC EXAMPLE - Import Format Demonstration",
+    "category": "GAME_HELP",
+    "source": {
+      "name": "ESO Wizard synthetic example",
+      "url": "https://example.com",
+      "source_type": "internal"
+    },
+    "external_id": "synthetic-example-1",
+    "canonical_url": "https://example.com/synthetic-example",
+    "content": "# Purpose\n\nThis is a clearly synthetic document that only demonstrates the import file format. It contains no Elder Scrolls Online facts and must not be used as game knowledge.\n\n## Sections\n\nHeadings, paragraphs and lists are used as chunk boundaries.\n\n- Each document has a title, a category, a source and content.\n- Re-importing unchanged content skips embedding.",
+    "metadata": { "synthetic": true }
+  }
+]
