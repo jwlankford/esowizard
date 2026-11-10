@@ -1,8 +1,11 @@
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
 
 # libpq-only parameters that asyncpg does not understand.
 _ASYNCPG_DROPPED_PARAMS = {"channel_binding", "sslmode"}
@@ -14,16 +17,17 @@ def _rewrite_url(url: str, driver: str) -> str:
     parts = urlsplit(url)
     query = parse_qsl(parts.query, keep_blank_values=True)
     if driver == "asyncpg":
-        ssl_required = any(k == "sslmode" and v in _SSL_MODES for k, v in query)
+        ssl_mode = next((v for k, v in query if k == "sslmode" and v in _SSL_MODES), None)
         query = [(k, v) for k, v in query if k not in _ASYNCPG_DROPPED_PARAMS]
-        if ssl_required and not any(k == "ssl" for k, _ in query):
-            query.append(("ssl", "require"))
+        if ssl_mode and not any(k == "ssl" for k, _ in query):
+            query.append(("ssl", ssl_mode))  # asyncpg accepts the same mode names
     scheme = f"postgresql+{driver}"
     return urlunsplit((scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Repository-root .env first, then a .env in the working directory (which takes precedence).
+    model_config = SettingsConfigDict(env_file=(str(_ROOT_ENV), ".env"), extra="ignore")
 
     # Neon PostgreSQL. DATABASE_URL is typically Neon's pooled endpoint; DATABASE_DIRECT_URL
     # (optional) is used for migrations and admin tasks. Either may be written as postgresql://,

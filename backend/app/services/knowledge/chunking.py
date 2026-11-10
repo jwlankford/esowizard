@@ -5,7 +5,10 @@ from app.core.categories import ESOCategory
 
 _HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
-_MIN_BODY_BUDGET = 100
+
+
+def _clip(value: str, limit: int) -> str:
+    return value if len(value) <= limit else value[: max(limit - 1, 1)] + "…"
 
 
 @dataclass(frozen=True)
@@ -115,16 +118,29 @@ class Chunker:
         self.chunk_overlap = chunk_overlap
 
     @staticmethod
-    def context_header(title: str, category: ESOCategory | str, section: str | None) -> str:
+    def context_header(
+        title: str,
+        category: ESOCategory | str,
+        section: str | None,
+        max_length: int | None = None,
+    ) -> str:
         label = category.label if isinstance(category, ESOCategory) else str(category)
+        if max_length is not None:
+            if section:
+                section = _clip(section, max(max_length // 3, 1))
+            fixed = len(f"Title: \nCategory: {label}") + (
+                len(f"\nSection: {section}") if section else 0
+            )
+            title = _clip(title, max(max_length - fixed, 10))
         header = f"Title: {title}\nCategory: {label}"
-        return f"{header}\nSection: {section}" if section else header
+        header = f"{header}\nSection: {section}" if section else header
+        return header[:max_length] if max_length is not None else header
 
     def chunk(self, title: str, category: ESOCategory | str, text: str) -> list[Chunk]:
         chunks: list[Chunk] = []
         for section, blocks in _split_sections(text):
-            header = self.context_header(title, category, section)
-            budget = max(self.chunk_size - len(header) - 2, _MIN_BODY_BUDGET)
+            header = self.context_header(title, category, section, self.chunk_size // 2)
+            budget = max(self.chunk_size - len(header) - 2, 1)
             units = [piece for block in blocks for piece in _split_long(block, budget)]
             for body in self._pack(units, budget):
                 content = f"{header}\n\n{body}"

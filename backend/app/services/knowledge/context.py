@@ -70,6 +70,26 @@ class RagContext:
             )
         return list(sources.values())
 
+    def resolve(self, answer: str) -> tuple[str, list[ContextSource]]:
+        """Return the answer with citation markers renumbered to match the returned sources."""
+        sources = self.sources_for(answer)
+        if not self.cited_numbers(answer):
+            return answer, sources
+        position = {source.document_id: index for index, source in enumerate(sources, start=1)}
+
+        def renumber(match: re.Match[str]) -> str:
+            mapped: list[int] = []
+            for part in match.group(1).split(","):
+                number = int(part)
+                if 1 <= number <= len(self.chunks):
+                    index = position[self.chunks[number - 1].document_id]
+                    if index not in mapped:
+                        mapped.append(index)
+            return "".join(f"[{index}]" for index in mapped)
+
+        renumbered = _CITATION.sub(renumber, answer)
+        return re.sub(r"(\[(\d+)\])(?:\[\2\])+", r"\1", renumbered), sources
+
 
 def build_context(chunks: list[RetrievedChunk]) -> RagContext:
     return RagContext(chunks=list(chunks))

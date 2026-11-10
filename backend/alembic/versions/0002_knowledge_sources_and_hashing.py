@@ -178,5 +178,12 @@ def downgrade():
         "source_id",
     ):
         op.drop_column("knowledge_documents", column)
+    # Phase 2 allows the same slug under different sources; make slugs unique again by
+    # suffixing later duplicates with their id.
+    op.execute(
+        "UPDATE knowledge_documents d SET slug = d.slug || '-' || d.id "
+        "FROM (SELECT id, row_number() OVER (PARTITION BY slug ORDER BY id) AS rn "
+        "FROM knowledge_documents) r WHERE r.id = d.id AND r.rn > 1"
+    )
     op.create_unique_constraint("knowledge_documents_slug_key", "knowledge_documents", ["slug"])
     op.drop_table("knowledge_sources")

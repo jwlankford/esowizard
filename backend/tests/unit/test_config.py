@@ -26,3 +26,9 @@ def test_chunk_overlap_must_be_smaller_than_chunk_size():
 
     with pytest.raises(ValueError):
         Settings(chunk_size=200, chunk_overlap=200)
+
+
+def test_verification_modes_are_preserved_for_asyncpg():
+    for mode in ("verify-ca", "verify-full"):
+        settings = Settings(database_url=f"postgresql://u:p@host/db?sslmode={mode}")
+        assert f"ssl={mode}" in settings.async_database_url

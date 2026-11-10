@@ -64,10 +64,11 @@ class RAGService:
                 llm_ms = int((time.perf_counter() - llm_started) * 1000)
                 if not is_insufficient(answer):
                     response.status = AskStatus.ANSWERED
-                    response.answer = answer.strip()
+                    final_answer, sources = context.resolve(answer.strip())
+                    response.answer = final_answer
                     response.sources = [
                         SourceRef(title=s.title, url=s.url, source_name=s.source_name)
-                        for s in context.sources_for(answer)
+                        for s in sources
                     ]
         except (ProviderError, SQLAlchemyError) as exc:
             logger.error("rag.failed error=%s", type(exc).__name__)

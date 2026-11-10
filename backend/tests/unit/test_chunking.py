@@ -68,3 +68,10 @@ def test_invalid_configuration():
         Chunker(100, 100)
     with pytest.raises(ValueError):
         Chunker(0, 0)
+
+
+def test_long_title_and_section_never_exceed_chunk_size():
+    text = "# " + "S" * 400 + "\n\n" + "word " * 200
+    chunks = Chunker(300, 30).chunk("T" * 500, ESOCategory.FISHING, text)
+    assert chunks
+    assert all(len(c.content) <= 300 for c in chunks)

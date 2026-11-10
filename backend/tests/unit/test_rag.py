@@ -159,3 +159,10 @@ def test_system_instruction_requires_grounding():
 )
 def test_category_detection(question, expected):
     assert detect_category(question) is expected
+
+
+def test_resolve_renumbers_citations_to_match_sources():
+    context = build_context([chunk(1, 1), chunk(2, 2), chunk(3, 2, title="Other")])
+    answer, sources = context.resolve("Fact [3] and also [2][3].")
+    assert [s.document_id for s in sources] == [2]
+    assert answer == "Fact [1] and also [1]."
