@@ -2,6 +2,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import SignInModal from "./SignInModal.vue";
 
+defineProps<{ dropUp?: boolean }>();
+
 const open = ref(false);
 const signInOpen = ref(false);
 const root = ref<HTMLElement | null>(null);
@@ -66,7 +68,8 @@ onBeforeUnmount(() => {
     </button>
     <ul
       v-if="open"
-      class="absolute right-0 top-12 z-20 w-48 overflow-hidden rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg"
+      class="absolute z-20 w-48 overflow-hidden rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg"
+      :class="dropUp ? 'bottom-12 left-0' : 'right-0 top-12'"
     >
       <li v-for="item in items" :key="item">
         <button

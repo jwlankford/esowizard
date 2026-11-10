@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { getCategories } from "../services/api";
 import { useAskStore } from "../stores/ask";
 
@@ -8,6 +8,7 @@ const category = ref("");
 const categories = ref<string[]>([]);
 const categoriesError = ref("");
 const store = useAskStore();
+const scroller = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
   try {
@@ -17,6 +18,27 @@ onMounted(async () => {
       "Categories are unavailable. Check that the API is running.";
   }
 });
+
+watch(
+  () => [store.active?.messages.length, store.loading, store.activeId],
+  async () => {
+    await nextTick();
+    scroller.value?.scrollTo({ top: scroller.value.scrollHeight });
+  },
+);
+
+function submit() {
+  const text = question.value.trim();
+  if (!text || store.loading) return;
+  question.value = "";
+  void store.ask(text, category.value || null);
+}
+
+function onEnter(event: KeyboardEvent) {
+  if (event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  submit();
+}
 
 function safeUrl(url: string): string | undefined {
   try {
@@ -31,88 +53,114 @@ function safeUrl(url: string): string | undefined {
 </script>
 
 <template>
-  <form
-    class="mt-[90px] space-y-4"
-    @submit.prevent="store.ask(question.trim(), category || null)"
-  >
-    <div class="relative flex items-center gap-2">
-      <label for="question">Your question</label>
-      <span class="group">
-        <button
-          type="button"
-          class="flex h-5 w-5 items-center justify-center rounded-full border border-slate-400 text-xs text-slate-300"
-          aria-label="About Tamriel"
-          aria-describedby="question-note"
+  <div class="flex min-h-0 flex-1 flex-col">
+    <div ref="scroller" class="flex-1 overflow-y-auto px-4" aria-live="polite">
+      <div class="mx-auto max-w-3xl space-y-6 py-6">
+        <div
+          v-if="!store.active"
+          class="mt-24 rounded-2xl bg-slate-950/70 p-8 text-center backdrop-blur"
         >
-          i
-        </button>
-        <span
-          id="question-note"
-          role="tooltip"
-          class="invisible absolute left-0 top-7 z-10 w-72 max-w-full rounded-lg border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200 shadow-lg group-focus-within:visible group-hover:visible"
-        >
-          <strong class="block">Ask about Tamriel</strong>
-          Ask an ESO question and explore answers grounded in the knowledge
-          base.
-        </span>
-      </span>
-    </div>
-    <textarea
-      id="question"
-      v-model="question"
-      class="w-full rounded-lg border border-slate-700 bg-slate-900 p-3"
-      rows="3"
-      maxlength="2000"
-      required
-      placeholder="How do I make Psijic Ambrosia?"
-    />
-    <label class="block" for="category">Category (optional)</label>
-    <select
-      id="category"
-      v-model="category"
-      class="rounded-lg border border-slate-700 bg-slate-900 p-3"
-    >
-      <option value="">All categories</option>
-      <option v-for="item in categories" :key="item" :value="item">
-        {{ item }}
-      </option>
-    </select>
-    <p v-if="categoriesError" class="text-amber-300" role="status">
-      {{ categoriesError }}
-    </p>
-    <div>
-      <button
-        class="rounded-lg bg-amber-300 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50"
-        :disabled="store.loading || !question.trim()"
-      >
-        {{ store.loading ? "Searching…" : "Ask ESO Wizard" }}
-      </button>
-    </div>
-  </form>
-  <p v-if="store.error" class="mt-8 text-red-300" role="alert">
-    {{ store.error }}
-  </p>
-  <section v-if="store.result" class="mt-10" aria-live="polite">
-    <h2 class="text-xl font-semibold">Answer</h2>
-    <p class="mt-3 whitespace-pre-wrap text-slate-200">
-      {{ store.result.answer }}
-    </p>
-    <div v-if="store.result.sources.length" class="mt-8">
-      <h3 class="font-semibold">Sources</h3>
-      <ol class="mt-3 list-decimal space-y-2 pl-6">
-        <li v-for="(source, index) in store.result.sources" :key="index">
-          <a
-            v-if="safeUrl(source.source_url)"
-            :href="safeUrl(source.source_url)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-amber-300 underline"
-            >{{ source.title }}</a
+          <h1 class="text-3xl font-bold">Ask about Tamriel</h1>
+          <p class="mt-3 text-slate-300">
+            Ask an ESO question and explore answers grounded in the knowledge
+            base.
+          </p>
+        </div>
+        <template v-else>
+          <div
+            v-for="message in store.active.messages"
+            :key="message.id"
+            class="flex"
+            :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
           >
-          <span v-else>{{ source.title }}</span>
-          <span class="text-slate-400"> — {{ source.source_name }}</span>
-        </li>
-      </ol>
+            <div
+              class="max-w-[85%] rounded-2xl px-4 py-3 backdrop-blur"
+              :class="
+                message.role === 'user'
+                  ? 'bg-amber-300 text-slate-950'
+                  : message.isError
+                    ? 'bg-slate-950/80 text-red-300'
+                    : 'bg-slate-950/80 text-slate-100'
+              "
+              :role="message.isError ? 'alert' : undefined"
+            >
+              <p class="whitespace-pre-wrap">{{ message.content }}</p>
+              <div v-if="message.sources?.length" class="mt-4">
+                <h3 class="text-sm font-semibold">Sources</h3>
+                <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm">
+                  <li v-for="(source, index) in message.sources" :key="index">
+                    <a
+                      v-if="safeUrl(source.source_url)"
+                      :href="safeUrl(source.source_url)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-amber-300 underline"
+                      >{{ source.title }}</a
+                    >
+                    <span v-else>{{ source.title }}</span>
+                    <span class="text-slate-400">
+                      — {{ source.source_name }}</span
+                    >
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          <div
+            v-if="store.loading && store.pendingId === store.activeId"
+            class="flex"
+          >
+            <div class="rounded-2xl bg-slate-950/80 px-4 py-3 text-slate-300">
+              Searching…
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
-  </section>
+
+    <form class="px-4 pb-4" @submit.prevent="submit">
+      <div
+        class="mx-auto max-w-3xl rounded-2xl border border-slate-700 bg-slate-950/90 p-3 backdrop-blur"
+      >
+        <label class="sr-only" for="question">Your question</label>
+        <textarea
+          id="question"
+          v-model="question"
+          class="w-full resize-none bg-transparent p-1 outline-none"
+          rows="2"
+          maxlength="2000"
+          placeholder="How do I make Psijic Ambrosia?"
+          @keydown.enter="onEnter"
+        />
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label class="sr-only" for="category">Category (optional)</label>
+            <select
+              id="category"
+              v-model="category"
+              class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            >
+              <option value="">All categories</option>
+              <option v-for="item in categories" :key="item" :value="item">
+                {{ item }}
+              </option>
+            </select>
+            <span
+              v-if="categoriesError"
+              class="text-xs text-amber-300"
+              role="status"
+            >
+              {{ categoriesError }}
+            </span>
+          </div>
+          <button
+            class="rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
+            :disabled="store.loading || !question.trim()"
+          >
+            {{ store.loading ? "Searching…" : "Send" }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </template>
