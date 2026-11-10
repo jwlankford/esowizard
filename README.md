@@ -1,5 +1,7 @@
 # ESO Wizard
 
+![ESO Wizard cover](frontend/public/cover.png)
+
 ESO Wizard is a starter application for asking natural-language questions about The Elder Scrolls Online. It uses a Vue 3 frontend, a FastAPI backend, PostgreSQL with pgvector, and Google's Gemini API. The knowledge base starts empty; no ESO content is included or invented.
 
 ## Start with Docker Compose
