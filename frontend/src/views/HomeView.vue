@@ -35,11 +35,9 @@ function submit() {
 }
 
 function onEnter(event: KeyboardEvent) {
-  if (event.shiftKey) {
-    question.value += "\n";
-  } else if (!event.isComposing) {
-    submit();
-  }
+  if (event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  submit();
 }
 
 function safeUrl(url: string): string | undefined {
@@ -108,7 +106,10 @@ function safeUrl(url: string): string | undefined {
               </div>
             </div>
           </div>
-          <div v-if="store.loading" class="flex">
+          <div
+            v-if="store.loading && store.pendingId === store.activeId"
+            class="flex"
+          >
             <div class="rounded-2xl bg-slate-950/80 px-4 py-3 text-slate-300">
               Searching…
             </div>
@@ -129,7 +130,7 @@ function safeUrl(url: string): string | undefined {
           rows="2"
           maxlength="2000"
           placeholder="How do I make Psijic Ambrosia?"
-          @keydown.enter.prevent="onEnter"
+          @keydown.enter="onEnter"
         />
         <div class="mt-2 flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">

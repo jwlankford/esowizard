@@ -21,6 +21,7 @@ export const useAskStore = defineStore("ask", () => {
   const conversations = ref<Conversation[]>([]);
   const activeId = ref<number | null>(null);
   const loading = ref(false);
+  const pendingId = ref<number | null>(null);
   let nextId = 1;
 
   const active = computed(
@@ -28,11 +29,6 @@ export const useAskStore = defineStore("ask", () => {
   );
 
   function newChat() {
-    activeId.value = null;
-  }
-
-  function clearAll() {
-    conversations.value = [];
     activeId.value = null;
   }
 
@@ -57,6 +53,7 @@ export const useAskStore = defineStore("ask", () => {
       content: question,
     });
     loading.value = true;
+    pendingId.value = conversation.id;
     try {
       const result = await askQuestion(question, category);
       conversation.messages.push({
@@ -75,6 +72,7 @@ export const useAskStore = defineStore("ask", () => {
       });
     } finally {
       loading.value = false;
+      pendingId.value = null;
     }
   }
 
@@ -86,6 +84,5 @@ export const useAskStore = defineStore("ask", () => {
     ask,
     newChat,
     select,
-    clearAll,
   };
 });
