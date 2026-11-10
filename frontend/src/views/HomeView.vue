@@ -2,10 +2,11 @@
 import { onMounted, ref } from "vue";
 import { getCategories } from "../services/api";
 import { useAskStore } from "../stores/ask";
+import type { CategoryInfo } from "../types/api";
 
 const question = ref("");
 const category = ref("");
-const categories = ref<string[]>([]);
+const categories = ref<CategoryInfo[]>([]);
 const categoriesError = ref("");
 const store = useAskStore();
 
@@ -56,8 +57,8 @@ function safeUrl(url: string): string | undefined {
       class="rounded-lg border border-slate-700 bg-slate-900 p-3"
     >
       <option value="">All categories</option>
-      <option v-for="item in categories" :key="item" :value="item">
-        {{ item }}
+      <option v-for="item in categories" :key="item.value" :value="item.value">
+        {{ item.label }}
       </option>
     </select>
     <p v-if="categoriesError" class="text-amber-300" role="status">
@@ -76,8 +77,21 @@ function safeUrl(url: string): string | undefined {
     {{ store.error }}
   </p>
   <section v-if="store.result" class="mt-10" aria-live="polite">
-    <h2 class="text-xl font-semibold">Answer</h2>
-    <p class="mt-3 whitespace-pre-wrap text-slate-200">
+    <h2 class="text-xl font-semibold">
+      {{
+        store.result.status === "answered"
+          ? "Answer"
+          : store.result.status === "insufficient_knowledge"
+            ? "Not enough verified information"
+            : "Something went wrong"
+      }}
+    </h2>
+    <p
+      class="mt-3 whitespace-pre-wrap"
+      :class="
+        store.result.status === 'error' ? 'text-red-300' : 'text-slate-200'
+      "
+    >
       {{ store.result.answer }}
     </p>
     <div v-if="store.result.sources.length" class="mt-8">
@@ -85,8 +99,8 @@ function safeUrl(url: string): string | undefined {
       <ol class="mt-3 list-decimal space-y-2 pl-6">
         <li v-for="(source, index) in store.result.sources" :key="index">
           <a
-            v-if="safeUrl(source.source_url)"
-            :href="safeUrl(source.source_url)"
+            v-if="source.url && safeUrl(source.url)"
+            :href="safeUrl(source.url)"
             target="_blank"
             rel="noopener noreferrer"
             class="text-amber-300 underline"
