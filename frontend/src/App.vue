@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useAskStore } from "./stores/ask";
 
 const store = useAskStore();
@@ -18,6 +18,34 @@ function select(id: number) {
   store.select(id);
   closeOnMobile();
 }
+
+const menuOpen = ref(false);
+const userMenu = ref<HTMLElement | null>(null);
+
+function clearChats() {
+  store.clearAll();
+  menuOpen.value = false;
+}
+
+function onDocumentClick(event: MouseEvent) {
+  if (menuOpen.value && !userMenu.value?.contains(event.target as Node)) {
+    menuOpen.value = false;
+  }
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape") menuOpen.value = false;
+}
+
+onMounted(() => {
+  document.addEventListener("click", onDocumentClick);
+  document.addEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", onDocumentClick);
+  document.removeEventListener("keydown", onKeydown);
+});
 </script>
 
 <template>
@@ -72,6 +100,50 @@ function select(id: number) {
           {{ chat.title }}
         </button>
       </nav>
+      <div ref="userMenu" class="relative border-t border-slate-800 p-3">
+        <div
+          v-if="menuOpen"
+          class="absolute inset-x-3 bottom-full mb-2 rounded-xl border border-slate-700 bg-slate-900 p-1 shadow-lg"
+          role="menu"
+        >
+          <button
+            class="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500"
+            role="menuitem"
+            disabled
+          >
+            Settings (coming soon)
+          </button>
+          <button
+            class="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-800"
+            role="menuitem"
+            @click="clearChats"
+          >
+            Clear chats
+          </button>
+          <hr class="my-1 border-slate-700" />
+          <button
+            class="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500"
+            role="menuitem"
+            disabled
+          >
+            Sign in (coming soon)
+          </button>
+        </div>
+        <button
+          class="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-800"
+          aria-haspopup="menu"
+          :aria-expanded="menuOpen"
+          @click="menuOpen = !menuOpen"
+        >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300 font-semibold text-slate-950"
+            aria-hidden="true"
+            >G</span
+          >
+          <span class="flex-1 truncate text-sm">Guest</span>
+          <span aria-hidden="true" class="text-slate-400">⋯</span>
+        </button>
+      </div>
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">

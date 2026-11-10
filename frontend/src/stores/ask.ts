@@ -31,6 +31,11 @@ export const useAskStore = defineStore("ask", () => {
     activeId.value = null;
   }
 
+  function clearAll() {
+    conversations.value = [];
+    activeId.value = null;
+  }
+
   function select(id: number) {
     activeId.value = id;
   }
@@ -73,5 +78,14 @@ export const useAskStore = defineStore("ask", () => {
     }
   }
 
-  return { conversations, activeId, active, loading, ask, newChat, select };
+  return {
+    conversations,
+    activeId,
+    active,
+    loading,
+    ask,
+    newChat,
+    select,
+    clearAll,
+  };
 });
