@@ -81,6 +81,7 @@ export const useAskStore = defineStore("ask", () => {
     activeId,
     active,
     loading,
+    pendingId,
     ask,
     newChat,
     select,
