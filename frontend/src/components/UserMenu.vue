@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import SignInModal from "./SignInModal.vue";
 
 const open = ref(false);
 const signInOpen = ref(false);
 const root = ref<HTMLElement | null>(null);
+const trigger = ref<HTMLButtonElement | null>(null);
 
 const items = ["Sign in", "Create account", "Profile", "Settings", "Sign out"];
 
 function select(item: string) {
   open.value = false;
   if (item === "Sign in") signInOpen.value = true;
+}
+
+async function closeSignIn() {
+  signInOpen.value = false;
+  await nextTick();
+  trigger.value?.focus();
 }
 
 function onDocumentClick(event: MouseEvent) {
@@ -20,7 +27,10 @@ function onDocumentClick(event: MouseEvent) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") open.value = false;
+  if (event.key === "Escape" && open.value) {
+    open.value = false;
+    trigger.value?.focus();
+  }
 }
 
 onMounted(() => {
@@ -37,10 +47,10 @@ onBeforeUnmount(() => {
 <template>
   <div ref="root" class="relative">
     <button
+      ref="trigger"
       type="button"
       class="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-slate-900/80 text-amber-300 hover:bg-slate-800"
       aria-label="User menu"
-      aria-haspopup="menu"
       :aria-expanded="open"
       @click="open = !open"
     >
@@ -56,13 +66,11 @@ onBeforeUnmount(() => {
     </button>
     <ul
       v-if="open"
-      role="menu"
       class="absolute right-0 top-12 z-20 w-48 overflow-hidden rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg"
     >
-      <li v-for="item in items" :key="item" role="none">
+      <li v-for="item in items" :key="item">
         <button
           type="button"
-          role="menuitem"
           class="block w-full px-4 py-2 text-left text-sm hover:bg-slate-800"
           @click="select(item)"
         >
@@ -70,6 +78,6 @@ onBeforeUnmount(() => {
         </button>
       </li>
     </ul>
-    <SignInModal :open="signInOpen" @close="signInOpen = false" />
+    <SignInModal :open="signInOpen" @close="closeSignIn" />
   </div>
 </template>

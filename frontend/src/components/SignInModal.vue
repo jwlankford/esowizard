@@ -7,6 +7,7 @@ const emit = defineEmits<{ close: [] }>();
 const email = ref("");
 const password = ref("");
 const emailInput = ref<HTMLInputElement | null>(null);
+const dialog = ref<HTMLElement | null>(null);
 
 watch(
   () => props.open,
@@ -21,6 +22,27 @@ watch(
 );
 
 // Authentication is not implemented yet; these handlers are placeholders.
+function trapFocus(event: KeyboardEvent) {
+  if (event.key !== "Tab" || !dialog.value) return;
+  const focusable = dialog.value.querySelectorAll<HTMLElement>(
+    "button, input, [href], [tabindex]:not([tabindex='-1'])",
+  );
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+  if (event.shiftKey && (active === first || !dialog.value.contains(active))) {
+    event.preventDefault();
+    last.focus();
+  } else if (
+    !event.shiftKey &&
+    (active === last || !dialog.value.contains(active))
+  ) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function signInWithEmail() {
   emit("close");
 }
@@ -33,15 +55,17 @@ function signInWithProvider() {
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+    class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 sm:items-center"
     @click.self="emit('close')"
     @keydown.esc="emit('close')"
+    @keydown="trapFocus"
   >
     <div
+      ref="dialog"
       role="dialog"
       aria-modal="true"
       aria-labelledby="signin-title"
-      class="relative w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl"
+      class="relative my-auto w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl"
     >
       <button
         type="button"
